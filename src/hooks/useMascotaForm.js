@@ -2,8 +2,8 @@ import { useReducer, useCallback, useEffect } from 'react';
 
 // --- DETECCIÓN DINÁMICA DEL HOST ---
 const currentHost = window.location.hostname;
-const API_BASE_URL = `http://${currentHost}:4020`;
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+console.log("api_base_url :", API_BASE_URL)
 const initialState = {
   step: 'inicio',
   maestros: { cat: [], tipo: [], raza: [] },
@@ -62,7 +62,7 @@ export const useMascotaForm = () => {
   // --- FUNCIÓN PARA CERRAR Y VOLVER AL PORTAL ---
   const handleCerrarAsistente = useCallback(() => {
     // Redirige al portal en el puerto 4020
-    window.location.href = `${API_BASE_URL}/mascotacambia`;
+    window.location.href = `${API_BASE_URL}/`;
   }, []);
 
   // --- FUNCIÓN DE ENVÍO REAL AL BACKEND ---
