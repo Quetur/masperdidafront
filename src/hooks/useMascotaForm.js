@@ -51,18 +51,31 @@ function formReducer(state, action) {
 export const useMascotaForm = () => {
   const [state, dispatch] = useReducer(formReducer, initialState);
 
-  // Carga inicial de maestros dinámica
+// 1. CARGA INICIAL DE MAESTROS
   useEffect(() => {
-    fetch(`${API_BASE_URL}/mascotanuevo_datos`)
+    // API_BASE_URL debe ser "/api" en producción para que Nginx lo capture
+    let consultaback = `${API_BASE_URL}/mascotanuevo_datos`;
+    console.log("fetch al back (URL):", consultaback);
+
+    fetch(consultaback)
       .then(res => res.json())
-      .then(data => dispatch({ type: 'SET_MAESTROS', payload: data }))
+      .then(data => {
+        // La data se loguea aquí, donde ya fue recibida
+        console.log("data del back recibida:", data); 
+        dispatch({ type: 'SET_MAESTROS', payload: data });
+      })
       .catch(err => console.error("Error cargando maestros:", err));
   }, []);
 
-  // --- FUNCIÓN PARA CERRAR Y VOLVER AL PORTAL ---
+  // 2. FUNCIÓN PARA CERRAR Y VOLVER AL PORTAL
   const handleCerrarAsistente = useCallback(() => {
-    // Redirige al portal en el puerto 4020
-    window.location.href = `${API_BASE_URL}/`;
+    // Lógica dinámica: en local vuelve al 4020, en la nube a la raíz "/"
+    const portalUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:4020/' 
+      : '/';
+    
+    console.log("Redirigiendo al portal:", portalUrl);
+    window.location.href = portalUrl;
   }, []);
 
   // --- FUNCIÓN DE ENVÍO REAL AL BACKEND ---
