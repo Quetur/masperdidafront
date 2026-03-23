@@ -49,6 +49,7 @@ function formReducer(state, action) {
 export const useMascotaForm = () => {
   const [state, dispatch] = useReducer(formReducer, initialState);
 
+  // Carga inicial de datos maestros desde el backend
   useEffect(() => {
     let consultaback = `${API_BASE_URL}/mascotanuevo_datos`;
     fetch(consultaback)
@@ -96,14 +97,11 @@ export const useMascotaForm = () => {
     }
   }, [state.mascotaData]);
 
-  // --- CAMBIO AQUÍ: USAR RESPUESTA DINÁMICA ---
+  // Manejo del inicio del reporte (Categoría: Perdido, Encontrado, etc.)
   const handleStartReport = useCallback((catId) => {
-    // Buscamos la categoría en los maestros cargados para obtener la descripción y respuesta
     const categoriaSeleccionada = state.maestros.cat.find(c => c.id_categoria === catId);
     
-    // Texto del usuario (Lo que el usuario "dice" al clickear)
     const userText = categoriaSeleccionada ? categoriaSeleccionada.des : "Seleccionado";
-    // Respuesta del Bot (Lo que trajiste de la base de datos)
     const botResponse = categoriaSeleccionada?.respuesta || "Entendido, vamos a comenzar.";
 
     dispatch({ type: 'ADD_MESSAGE', payload: { text: userText, sender: 'user' } });
@@ -111,10 +109,8 @@ export const useMascotaForm = () => {
     dispatch({ type: 'SET_STEP', payload: 'loading_bot' });
 
     setTimeout(() => {
-      // Primero dice el mensaje de la DB (Ej: "Que triste...")
       dispatch({ type: 'ADD_MESSAGE', payload: { text: botResponse, sender: 'bot' } });
       
-      // Un segundo después pregunta la especie
       setTimeout(() => {
         dispatch({ type: 'ADD_MESSAGE', payload: { text: "¿Qué tipo de mascota es?", sender: 'bot' } });
         dispatch({ type: 'SET_STEP', payload: 'especie' });
@@ -123,6 +119,7 @@ export const useMascotaForm = () => {
     }, 800);
   }, [state.maestros.cat]);
 
+  // Manejo de pasos intermedios (DINÁMICO)
   const handleNextStep = useCallback((valor, campo) => {
     if (campo === 'enviar_final') {
       enviarReporteFinal();
@@ -134,12 +131,22 @@ export const useMascotaForm = () => {
     let userDisplayMsg = valor;
     let isMapStep = false;
 
-    if (campo === 'id_tipo') userDisplayMsg = (valor === 10 ? "Perro 🐶" : "Gato 🐱");
+    // --- LÓGICA DINÁMICA DE ESPECIE/TIPO ---
+    if (campo === 'id_tipo') {
+      // Buscamos el objeto en la lista 'tipo' que viene de la DB
+      const tipoEncontrado = state.maestros.tipo.find(t => t.id_tipo === valor);
+      if (tipoEncontrado) {
+        // Usamos la descripción e ícono que vienen de la tabla 'tipo'
+        userDisplayMsg = `${tipoEncontrado.des} ${tipoEncontrado.icono || '🐾'}`;
+      }
+    }
+
     if (campo === 'ubicacion_confirmada') {
         userDisplayMsg = "Ubicación confirmada ✅";
         isMapStep = true;
     }
 
+    // El usuario "habla" en el chat
     dispatch({ 
         type: 'ADD_MESSAGE', 
         payload: { 
@@ -155,11 +162,13 @@ export const useMascotaForm = () => {
     
     dispatch({ type: 'SET_STEP', payload: 'loading_bot' });
 
+    // El Bot responde y avanza al siguiente paso
     setTimeout(() => {
+      // Configuramos el flujo de preguntas
       const flow = {
         id_tipo: { 
           next: 'nombre', 
-          msg: state.mascotaData.id_categoria === 20 ? "¿Cómo se llama la mascota?" : "¿Cómo se llama la mascota?" 
+          msg: "¿Cómo se llama la mascota?" 
         },
         titulo: { 
           next: 'ubicacion', 
@@ -189,7 +198,7 @@ export const useMascotaForm = () => {
       }
     }, 800);
 
-  }, [enviarReporteFinal, state.mascotaData.latitud, state.mascotaData.longitud, state.mascotaData.id_categoria]);
+  }, [enviarReporteFinal, state.mascotaData.latitud, state.mascotaData.longitud, state.mascotaData.id_categoria, state.maestros.tipo]);
 
   return { ...state, handleStartReport, handleNextStep, handleCerrarAsistente, dispatch };
 };
