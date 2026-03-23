@@ -23,7 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 .env*
+.env.local
+.env.production
+.env.
 .gitignore
+node_modules
+dist
+.env
+.env.local
+.env.production
+.env.development
 
 echo "# masperdidafront" >> README.md
 git init
@@ -37,5 +46,7 @@ git remote add origin https://github.com/Quetur/masperdidafront.git
 git branch -M main
 git push -u origin main
 
-
+cd masperdidafront/
 git pull origin main
+npm install   # Por si agregaste alguna librería
+npm run build # Para actualizar la carpeta dist

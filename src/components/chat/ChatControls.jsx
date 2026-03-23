@@ -38,7 +38,7 @@ export const ChatControls = ({ step, state, handlers }) => {
     // 2. Nombre de la mascota
     nombre: (
       <div className="w-full animate-in fade-in">
-        <p className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Nombre de la mascota</p>
+        <p className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Nombre de la mascota (si no lo sabes, pone nose)</p>
         <input
           autoFocus
           className="w-full p-4 rounded-2xl border-2 border-gray-200 outline-none focus:border-blue-600 transition-colors"
@@ -115,25 +115,45 @@ export const ChatControls = ({ step, state, handlers }) => {
       </div>
     ),
 
-    // 6. Teléfono (Campo: celular)
+    
+    // 6. Teléfono con Formato (XX) XXXX - XXXX
     telefono: (
       <div className="w-full animate-in fade-in">
-        <p className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Tu número de contacto</p>
+        <p className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Tu número de contacto (sin 15)</p>
         <input
           autoFocus
           type="tel"
           className={`w-full p-4 rounded-2xl border-2 outline-none transition-colors ${
             phoneError ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-600"
           }`}
-          placeholder="Ej: 1122334455"
-          defaultValue={mascotaData.celular || ""}
+          placeholder="(11) 1234 - 5678"
+          // Usamos value para que sea un componente controlado
+          value={state.mascotaData.celular || ""}
+          onChange={(e) => {
+            // 1. Solo permitimos números
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,4})(\d{0,4})/);
+            
+            // 2. Limitamos a 10 dígitos reales y aplicamos la máscara
+            let formatted = !x[2] 
+              ? x[1] 
+              : `(${x[1]}) ${x[2]}${x[3] ? ' - ' + x[3] : ''}`;
+            
+            // 3. Actualizamos el estado inmediatamente para que se vea el cambio
+            dispatch({ type: "UPDATE_DATA", payload: { celular: formatted } });
+          }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && e.target.value.length >= 8) {
+            // Al presionar Enter, validamos que tenga los 10 dígitos (sin contar máscara)
+            const rawValue = e.target.value.replace(/\D/g, '');
+            if (e.key === "Enter" && rawValue.length >= 10) {
               handleNextStep(e.target.value, "celular");
             }
           }}
         />
-        {phoneError && <p className="text-red-500 text-[10px] font-bold mt-1 ml-2">Ingresá un número válido</p>}
+        {phoneError && (
+          <p className="text-red-500 text-[10px] font-bold mt-1 ml-2">
+            Ingresá los 10 dígitos del área y número
+          </p>
+        )}
       </div>
     ),
 
