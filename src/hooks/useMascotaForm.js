@@ -96,21 +96,32 @@ export const useMascotaForm = () => {
     }
   }, [state.mascotaData]);
 
-  // NUEVO ORDEN: PASO 1 -> PASO 2 (Especie)
+  // --- CAMBIO AQUÍ: USAR RESPUESTA DINÁMICA ---
   const handleStartReport = useCallback((catId) => {
-    let text = "Perdí mi mascota 😢";
-    if (catId === 30) text = "Encontré una mascota 🏠";
-    if (catId === 40) text = "Quiero dar en adopción 🐾";
+    // Buscamos la categoría en los maestros cargados para obtener la descripción y respuesta
+    const categoriaSeleccionada = state.maestros.cat.find(c => c.id_categoria === catId);
+    
+    // Texto del usuario (Lo que el usuario "dice" al clickear)
+    const userText = categoriaSeleccionada ? categoriaSeleccionada.des : "Seleccionado";
+    // Respuesta del Bot (Lo que trajiste de la base de datos)
+    const botResponse = categoriaSeleccionada?.respuesta || "Entendido, vamos a comenzar.";
 
-    dispatch({ type: 'ADD_MESSAGE', payload: { text, sender: 'user' } });
+    dispatch({ type: 'ADD_MESSAGE', payload: { text: userText, sender: 'user' } });
     dispatch({ type: 'UPDATE_DATA', payload: { id_categoria: catId } });
     dispatch({ type: 'SET_STEP', payload: 'loading_bot' });
 
     setTimeout(() => {
-      dispatch({ type: 'ADD_MESSAGE', payload: { text: "Perfecto, ¿qué tipo de mascota es?", sender: 'bot' } });
-      dispatch({ type: 'SET_STEP', payload: 'especie' });
+      // Primero dice el mensaje de la DB (Ej: "Que triste...")
+      dispatch({ type: 'ADD_MESSAGE', payload: { text: botResponse, sender: 'bot' } });
+      
+      // Un segundo después pregunta la especie
+      setTimeout(() => {
+        dispatch({ type: 'ADD_MESSAGE', payload: { text: "¿Qué tipo de mascota es?", sender: 'bot' } });
+        dispatch({ type: 'SET_STEP', payload: 'especie' });
+      }, 1000);
+
     }, 800);
-  }, []);
+  }, [state.maestros.cat]);
 
   const handleNextStep = useCallback((valor, campo) => {
     if (campo === 'enviar_final') {
@@ -145,14 +156,11 @@ export const useMascotaForm = () => {
     dispatch({ type: 'SET_STEP', payload: 'loading_bot' });
 
     setTimeout(() => {
-      // NUEVO ORDEN DE FLUJO:
       const flow = {
-        // Después de Especie (id_tipo) viene Nombre (titulo)
         id_tipo: { 
           next: 'nombre', 
-          msg: state.mascotaData.id_categoria === 20 ? "¿Cómo se llama tu mascota?" : "¿Cómo se llama tu mascota?" 
+          msg: state.mascotaData.id_categoria === 20 ? "¿Cómo se llama la mascota?" : "¿Cómo se llama la mascota?" 
         },
-        // Después de Nombre (titulo) viene Ubicación
         titulo: { 
           next: 'ubicacion', 
           msg: "Confirmá el punto en el mapa donde ocurrió:" 

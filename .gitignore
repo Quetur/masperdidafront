@@ -33,6 +33,7 @@ dist
 .env.local
 .env.production
 .env.development
+.gitignore
 
 echo "# masperdidafront" >> README.md
 git init
