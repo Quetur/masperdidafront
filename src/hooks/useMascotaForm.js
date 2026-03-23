@@ -99,7 +99,7 @@ export const useMascotaForm = () => {
         formData.append("foto2", state.mascotaData.foto2);
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/mascota_chat_graba`, {
+      const response = await fetch(`${API_BASE_URL}/mascota_chat_graba`, {
         method: "POST",
         body: formData,
       });
